@@ -2,10 +2,6 @@ Address Normalizer
 =======
 A simple tool that takes a CSV with an "address" column and adds a column with normalized addresses, using [the Ruby street_address gem](https://github.com/derrek/street-address) (a port of the Perl module [Geo::StreetAddress::US](http://search.cpan.org/~sderle/Geo-StreetAddress-US-0.99/)).
 
-Does your project or organization use this?
-------------------------------------------
-Add it to the [apps](http://github.com/codeforamerica/cfa_template/wiki/apps) wiki!
-
 Usage Examples
 --------------
 
@@ -42,6 +38,7 @@ operating system. Ideally, a bug report should include a pull request with faili
 
 Submitting a Pull Request
 -------------------------
+(Note: not using this process yet as this is a very early alpha; will conform later.)
 1. Fork the project.
 2. Create a topic branch.
 3. Implement your feature or bug fix.
@@ -51,6 +48,10 @@ Submitting a Pull Request
 7. Run <tt>bundle exec rake spec</tt>. If your changes are not 100% covered, go back to step 6.
 8. Commit and push your changes.
 9. Submit a pull request. Please do not include changes to the gemspec, version, or history file. (If you want to create your own version for some reason, please do so in a separate commit.)
+
+Does your project or organization use this?
+------------------------------------------
+Add it to the [apps](http://github.com/codeforamerica/cfa_template/wiki/apps) wiki!
 
 Copyright
 ---------
