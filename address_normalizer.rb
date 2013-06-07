@@ -4,21 +4,22 @@ require 'cmess/guess_encoding'
 require 'pry'
 
 class AddressNormalizer
+  
+  attr_reader :errors, :malformed_rows
 
   def initialize(filename)
     @errors         = []
     @malformed_rows = []
+    @counter        = 0
+    @address_index = 0
+    @normalized_address_index = 0
+
     normalize_csv(filename)
   end
 
   # Given a CSV file, creates a new one with normalized addresses
   # If there are malformed rows/errors, saves those to a separate output file
   def normalize_csv(filename)
-
-    # Overhead setup
-    counter       = 0
-    address_index = 0
-    normalized_address_index = 0
 
     timestamp = Time.now.to_s.gsub(/:|-/,"").gsub(/\s+/,"_")
 
@@ -30,31 +31,31 @@ class AddressNormalizer
     puts "Normalizing addresses (this may take a while)..."
     
     IO.foreach(filename, :encoding => source_encoding) do |line|
-      puts "On row #{counter}" if counter % 100 == 0
+      puts "On row #{@counter}" if @counter % 100 == 0
 
       # If the header row, get the index for the address and add a column for the address_normalized
-      if counter == 0
+      if @counter == 0
         CSV.parse(line) do |row|
-          address_index = row.index("address")
+          @address_index = row.index("address")
           row << "address_normalized"
-          normalized_address_index = row.index("address_normalized")
+          @normalized_address_index = row.index("address_normalized")
           normalized_output_file.write(CSV.generate_line(row))
         end
-        counter += 1
+        @counter += 1
 
       # For normal rows, normalize, write to file, and catch errors
       else
         begin
           CSV.parse(line) do |row|
             begin
-              sa = StreetAddress::US.parse(row[address_index] + ", , ")
+              sa = StreetAddress::US.parse(row[@address_index] + ", , ")
             # Catch empty address
             rescue NoMethodError
               sa = ""
             end
             row << sa.to_s.upcase
             normalized_output_file.write(CSV.generate_line(row))
-            counter += 1
+            @counter += 1
           end
         # Rescue from problem rows
         rescue CSV::MalformedCSVError => er
