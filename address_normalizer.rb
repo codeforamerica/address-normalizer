@@ -13,6 +13,7 @@ class AddressNormalizer
     @counter        = 0
     @address_index = 0
     @normalized_address_index = 0
+    @timestamp = Time.now.to_s.gsub(/:|-/,"").gsub(/\s+/,"_")
 
     normalize_csv(filename)
   end
@@ -21,14 +22,46 @@ class AddressNormalizer
   # If there are malformed rows/errors, saves those to a separate output file
   def normalize_csv(filename)
 
-    timestamp = Time.now.to_s.gsub(/:|-/,"").gsub(/\s+/,"_")
-
-    normalized_output_file = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{timestamp}.csv", "w")
-
     # Check encoding
     source_encoding = check_encoding(filename)
 
+    # normalize_file
     puts "Normalizing addresses (this may take a while)..."
+    process_csv(filename, source_encoding)
+
+    # If there were problem rows, print them to the user and save them to a file
+    unless @malformed_rows.empty?
+      puts "Errors: #{@errors.to_s}\n\n\n" unless @errors.empty?
+      malformed_row_output_file = File.open("AddressNormalizer_MalformedRows_#{timestamp}.txt", "w")
+      puts "Malformed rows:"
+      @malformed_rows.each do |mr|
+        puts mr
+        malformed_row_output_file.write(mr)
+        malformed_row_output_file.write("\n")
+      end
+      malformed_row_output_file.close
+      puts "Malformed rows saved to disk in #{malformed_row_output_file.path}."
+    end
+    puts "Done!"
+
+  end
+
+  def check_encoding filename
+    puts "Opening file to check encoding..."
+    
+    source_file     = File.read(filename)
+    source_encoding = CMess::GuessEncoding::Automatic.guess(source_file)
+    
+    puts "Encoding: #{source_encoding}"
+    puts "Total number of rows: #{source_file.lines.count}"
+    
+    source_file = nil
+
+    return source_encoding
+  end
+
+  def process_csv(filename, source_encoding)
+    normalized_output_file = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{@timestamp}.csv", "w")
     
     IO.foreach(filename, :encoding => source_encoding) do |line|
       puts "On row #{@counter}" if @counter % 100 == 0
@@ -63,38 +96,6 @@ class AddressNormalizer
           @malformed_rows << line
         end
       end
-
     end
-
-    # If there were problem rows, print them to the user and save them to a file
-    unless @malformed_rows.empty?
-      puts "Errors: #{@errors.to_s}\n\n\n" unless @errors.empty?
-      malformed_row_output_file = File.open("AddressNormalizer_MalformedRows_#{timestamp}.txt", "w")
-      puts "Malformed rows:"
-      @malformed_rows.each do |mr|
-        puts mr
-        malformed_row_output_file.write(mr)
-        malformed_row_output_file.write("\n")
-      end
-      malformed_row_output_file.close
-      puts "Malformed rows saved to disk in #{malformed_row_output_file.path}."
     end
-    puts "Done!"
-
-  end
-
-  def check_encoding filename
-    puts "Opening file to check encoding..."
-    
-    source_file     = File.read(filename)
-    source_encoding = CMess::GuessEncoding::Automatic.guess(source_file)
-    
-    puts "Encoding: #{source_encoding}"
-    puts "Total number of rows: #{source_file.lines.count}"
-    
-    source_file = nil
-
-    return source_encoding
-  end
-
 end
