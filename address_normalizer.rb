@@ -4,18 +4,18 @@ require 'cmess/guess_encoding'
 require 'pry'
 
 class AddressNormalizer
-  
+
   attr_reader :errors, :malformed_rows
 
   def initialize(filename)
     @errors         = []
     @malformed_rows = []
-    @counter        = 0
-    @address_index = 0
     @normalized_address_index = 0
     @timestamp = Time.now.to_s.gsub(/:|-/,"").gsub(/\s+/,"_")
+    @address_index = 0
 
     normalize_csv(filename)
+
   end
 
   # Given a CSV file, creates a new one with normalized addresses
@@ -26,7 +26,6 @@ class AddressNormalizer
     source_encoding = check_encoding(filename)
 
     # normalize_file
-    puts "Normalizing addresses (this may take a while)..."
     process_csv(filename, source_encoding)
 
     # If there were problem rows, print them to the user and save them to a file
@@ -48,54 +47,60 @@ class AddressNormalizer
 
   def check_encoding filename
     puts "Opening file to check encoding..."
-    
+
     source_file     = File.read(filename)
     source_encoding = CMess::GuessEncoding::Automatic.guess(source_file)
-    
+
     puts "Encoding: #{source_encoding}"
     puts "Total number of rows: #{source_file.lines.count}"
-    
+
     source_file = nil
 
     return source_encoding
   end
 
+  #TODO-mike break this up
   def process_csv(filename, source_encoding)
-    normalized_output_file = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{@timestamp}.csv", "w")
-    
-    IO.foreach(filename, :encoding => source_encoding) do |line|
-      puts "On row #{@counter}" if @counter % 100 == 0
+    puts "Normalizing addresses (this may take a while)..."
+    counter = 0
 
+    normalized_output_file = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{@timestamp}.csv", "w")
+
+    IO.foreach(filename, :encoding => source_encoding) do |line|
+      puts "On row #{counter}" if counter % 100 == 0
+      puts "counter: #{counter}"
       # If the header row, get the index for the address and add a column for the address_normalized
-      if @counter == 0
+      if counter == 0
         CSV.parse(line) do |row|
           @address_index = row.index("address")
           row << "address_normalized"
           @normalized_address_index = row.index("address_normalized")
           normalized_output_file.write(CSV.generate_line(row))
         end
-        @counter += 1
+        counter += 1
 
-      # For normal rows, normalize, write to file, and catch errors
+        # For normal rows, normalize, write to file, and catch errors
       else
         begin
           CSV.parse(line) do |row|
             begin
               sa = StreetAddress::US.parse(row[@address_index] + ", , ")
-            # Catch empty address
+              # Catch empty address
             rescue NoMethodError
               sa = ""
             end
             row << sa.to_s.upcase
             normalized_output_file.write(CSV.generate_line(row))
-            @counter += 1
+            counter += 1
           end
-        # Rescue from problem rows
+          # Rescue from problem rows
         rescue CSV::MalformedCSVError => er
           @errors << er.message
           @malformed_rows << line
         end
       end
+
     end
-    end
+  end
+
 end
