@@ -15,15 +15,19 @@ class AddressNormalizerTest < Test::Unit::TestCase
 	# main test function
 	def test_NormalizedFileExists
 		assert File.exists?(@filename), 'Normalized file was not created'
+	end
 
+	# assert that 'address_normalized' column was added
+	def test_FirstRowHasNormalizedColumn
 		rows = CSV.read(@filename)
 		assert rows[0].include?('address_normalized')
 	end
 
-	# assert that 'address_normalized' column was added
-	# def test_FirstRowHasNormalizedColumn
-
-	# end
+	# dumb check for properly normalized column
+	def test_CrudeCheck
+		rows = CSV.read(@filename)
+		assert rows[1][2] == "6687 DEL PARTY AVENUE 90045, ISLA VISTA, CA"
+	end
 
 	def teardown
 		File.delete(@filename)
