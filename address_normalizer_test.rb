@@ -8,7 +8,7 @@ class AddressNormalizerTest < Test::Unit::TestCase
 	def setup
 		@timestamp = Time.now.to_s.gsub(/:|-/,"").gsub(/\s+/,"_")
 		@filename  = "test1_NormalizedAddresses_#{@timestamp}.csv"
-		# @filename = "test1_NormalizedAddresses_20130609_010240_0700.csv"
+
 		AddressNormalizer.new('example_data/test1.csv')
 	end
 
