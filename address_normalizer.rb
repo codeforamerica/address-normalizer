@@ -101,6 +101,8 @@ class AddressNormalizer
       end
 
     end
+        #not closing screws up tests
+        normalized_output_file.close
   end
 
 end
