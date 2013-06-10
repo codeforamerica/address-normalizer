@@ -15,13 +15,11 @@ class AddressNormalizer
     @address_index = 0
 
     normalize_csv(filename)
-
   end
 
   # Given a CSV file, creates a new one with normalized addresses
   # If there are malformed rows/errors, saves those to a separate output file
   def normalize_csv(filename)
-
     # Check encoding
     source_encoding = check_encoding(filename)
 
@@ -29,20 +27,9 @@ class AddressNormalizer
     process_csv(filename, source_encoding)
 
     # If there were problem rows, print them to the user and save them to a file
-    unless @malformed_rows.empty?
-      puts "Errors: #{@errors.to_s}\n\n\n" unless @errors.empty?
-      malformed_row_output_file = File.open("AddressNormalizer_MalformedRows_#{timestamp}.txt", "w")
-      puts "Malformed rows:"
-      @malformed_rows.each do |mr|
-        puts mr
-        malformed_row_output_file.write(mr)
-        malformed_row_output_file.write("\n")
-      end
-      malformed_row_output_file.close
-      puts "Malformed rows saved to disk in #{malformed_row_output_file.path}."
-    end
+    handle_malformed_rows unless @malformed_rows.empty?
+      
     puts "Done!"
-
   end
 
   def check_encoding filename
@@ -62,16 +49,17 @@ class AddressNormalizer
   #TODO-mike break this up
   def process_csv(filename, source_encoding)
     puts "Normalizing addresses (this may take a while)..."
-    counter = 0
 
     normalized_output_file = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{@timestamp}.csv", "w")
 
+    counter = 0
     IO.foreach(filename, :encoding => source_encoding) do |line|
       puts "On row #{counter}" if counter % 100 == 0
-      puts "counter: #{counter}"
+
       # If the header row, get the index for the address and add a column for the address_normalized
       if counter == 0
         CSV.parse(line) do |row|
+          # check if 'address' exists
           @address_index = row.index("address")
           row << "address_normalized"
           @normalized_address_index = row.index("address_normalized")
@@ -103,6 +91,20 @@ class AddressNormalizer
     end
         #not closing screws up tests
         normalized_output_file.close
+  end
+
+  def handle_malformed_rows
+    puts "Errors: #{@errors.to_s}\n\n\n" unless @errors.empty?
+
+    malformed_row_output_file = File.open("AddressNormalizer_MalformedRows_#{@timestamp}.txt", "w")
+    puts "Malformed rows:"
+    @malformed_rows.each do |mr|
+      puts mr
+      malformed_row_output_file.write(mr + "\n")
+    end
+    malformed_row_output_file.close
+
+    puts "Malformed rows saved to disk in #{malformed_row_output_file.path}."
   end
 
 end
