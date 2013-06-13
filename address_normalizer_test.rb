@@ -14,29 +14,29 @@ class AddressNormalizerTest < Test::Unit::TestCase
 	end
 
 	# main test function
-	def test_NormalizedFileExists
+	def test_normalized_file_exist
 		assert File.exists?(@filename), 'Normalized file was not created'
 	end
 
 	# assert that 'address_normalized' column was added
-	def test_FirstRowHasNormalizedColumn
+	def test_first_row_has_normalized_column
 		rows = CSV.read(@filename)
 		assert rows[0].include?('address_normalized')
 	end
 
 	# dumb check for properly normalized column
-	def test_CrudeCheck
+	def test_normalized_address_created
 		rows = CSV.read(@filename)
 		assert rows[1][2] == "6687 DEL PARTY AVENUE 90045, ISLA VISTA, CA"
 	end
 
 	# TODO malformed rows test
-	def test_unclosedRowError
+	def test_unclosed_row_error_caught
 		assert !@normalized.errors.empty?
 		puts @timestamp
 	end
 
-	def test_MalformedRowsFileExists
+	def test_malformed_rows_file_existance
 		assert File.exists?(@malformed), 'Malformed file was not created'
 	end
 

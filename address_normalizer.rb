@@ -28,7 +28,7 @@ class AddressNormalizer
 
     # If there were problem rows, print them to the user and save them to a file
     handle_malformed_rows unless @malformed_rows.empty?
-      
+
     puts "Done!"
   end
 
@@ -50,47 +50,51 @@ class AddressNormalizer
   def process_csv(filename, source_encoding)
     puts "Normalizing addresses (this may take a while)..."
 
-    normalized_output_file = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{@timestamp}.csv", "w")
+    normalized_out = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{@timestamp}.csv", "w")
 
     counter = 0
     IO.foreach(filename, :encoding => source_encoding) do |line|
       puts "On row #{counter}" if counter % 100 == 0
-
-      # If the header row, get the index for the address and add a column for the address_normalized
+      # If the header row, get the indecx for the address and add a column for the address_normalized
       if counter == 0
-        CSV.parse(line) do |row|
-          # check if 'address' exists
-          @address_index = row.index("address")
-          row << "address_normalized"
-          @normalized_address_index = row.index("address_normalized")
-          normalized_output_file.write(CSV.generate_line(row))
-        end
-        counter += 1
-
+        handle_first_row(normalized_out, line)
         # For normal rows, normalize, write to file, and catch errors
       else
-        begin
-          CSV.parse(line) do |row|
-            begin
-              sa = StreetAddress::US.parse(row[@address_index] + ", , ")
-              # Catch empty address
-            rescue NoMethodError
-              sa = ""
-            end
-            row << sa.to_s.upcase
-            normalized_output_file.write(CSV.generate_line(row))
-            counter += 1
-          end
-          # Rescue from problem rows
-        rescue CSV::MalformedCSVError => er
-          @errors << er.message
-          @malformed_rows << line
-        end
+        normalize_line(normalized_out, line)
       end
-
+      counter += 1
     end
-        #not closing screws up tests
-        normalized_output_file.close
+    #not closing screws up tests
+    normalized_out.close
+  end
+
+  def handle_first_row(file, line)
+    CSV.parse(line) do |row|
+      # check if 'address' exists
+      @address_index = row.index("address")
+      row << "address_normalized"
+      @normalized_address_index = row.index("address_normalized")
+      file.write(CSV.generate_line(row))
+    end
+  end
+
+  def normalize_line(file, line)
+    begin
+      CSV.parse(line) do |row|
+        begin
+          sa = StreetAddress::US.parse(row[@address_index] + ", , ")
+          # Catch empty address
+        rescue NoMethodError
+          sa = ""
+        end
+        row << sa.to_s.upcase
+        file.write(CSV.generate_line(row))
+      end
+      # Rescue from problem rows
+    rescue CSV::MalformedCSVError => er
+      @errors << er.message
+      @malformed_rows << line
+    end
   end
 
   def handle_malformed_rows
