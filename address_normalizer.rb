@@ -21,7 +21,7 @@ class AddressNormalizer
   # If there are malformed rows/errors, saves those to a separate output file
   def normalize_csv(filename)
     # Check encoding
-    source_encoding = check_encoding(filename)
+    source_encoding = get_encoding(filename)
 
     # normalize_file
     process_csv(filename, source_encoding)
@@ -32,7 +32,7 @@ class AddressNormalizer
     puts "Done!"
   end
 
-  def check_encoding filename
+  def get_encoding filename
     puts "Opening file to check encoding..."
 
     source_file     = File.read(filename)
@@ -82,12 +82,12 @@ class AddressNormalizer
     begin
       CSV.parse(line) do |row|
         begin
-          sa = StreetAddress::US.parse(row[@address_index] + ", , ")
+          strt_ad = StreetAddress::US.parse(row[@address_index] + ", , ")
           # Catch empty address
         rescue NoMethodError
-          sa = ""
+          strt_ad = ""
         end
-        row << sa.to_s.upcase
+        row << strt_ad.to_s.upcase
         file.write(CSV.generate_line(row))
       end
       # Rescue from problem rows
@@ -102,13 +102,13 @@ class AddressNormalizer
 
     malformed_row_output_file = File.open("AddressNormalizer_MalformedRows_#{@timestamp}.txt", "w")
     puts "Malformed rows:"
-    @malformed_rows.each do |mr|
-      puts mr
-      malformed_row_output_file.write(mr + "\n")
+    @malformed_rows.each do |row|
+      puts row
+      malformed_row_output_file.write(row + "\n")
     end
-    malformed_row_output_file.close
-
     puts "Malformed rows saved to disk in #{malformed_row_output_file.path}."
+    
+    malformed_row_output_file.close
   end
 
 end
