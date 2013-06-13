@@ -33,7 +33,6 @@ class AddressNormalizerTest < Test::Unit::TestCase
 	# TODO malformed rows test
 	def test_unclosed_row_error_caught
 		assert !@normalized.errors.empty?
-		puts @timestamp
 	end
 
 	def test_malformed_rows_file_existance
