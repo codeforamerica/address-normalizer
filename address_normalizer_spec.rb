@@ -1,3 +1,4 @@
+require 'csv'
 require_relative 'address_normalizer'
 
 describe AddressNormalizer do

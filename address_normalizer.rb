@@ -5,14 +5,12 @@ require 'pry'
 
 class AddressNormalizer
 
-  attr_reader :errors, :malformed_rows
+  attr_accessor :errors, :malformed_rows, :timestamp, :address_index, :normalized_address_index
 
   def initialize(filename)
     @errors         = []
     @malformed_rows = []
-    @normalized_address_index = 0
     @timestamp = Time.now.to_s.gsub(/:|-/,"").gsub(/\s+/,"_")
-    @address_index = 0
 
     normalize_csv(filename)
   end
@@ -27,7 +25,7 @@ class AddressNormalizer
     process_csv(filename, source_encoding)
 
     # If there were problem rows, print them to the user and save them to a file
-    handle_malformed_rows unless @malformed_rows.empty?
+    handle_malformed_rows unless malformed_rows.empty?
 
     puts "Done!"
   end
@@ -50,7 +48,7 @@ class AddressNormalizer
   def process_csv(filename, source_encoding)
     puts "Normalizing addresses (this may take a while)..."
 
-    normalized_out = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{@timestamp}.csv", "w")
+    normalized_out = File.open("#{File.basename(filename,".*")}_NormalizedAddresses_#{timestamp}.csv", "w")
 
     counter = 0
     IO.foreach(filename, :encoding => source_encoding) do |line|
@@ -71,9 +69,9 @@ class AddressNormalizer
   def handle_first_row(file, line)
     CSV.parse(line) do |row|
       # check if 'address' exists
-      @address_index = row.index("address")
+      self.address_index = row.index("address")
       row << "address_normalized"
-      @normalized_address_index = row.index("address_normalized")
+      self.normalized_address_index = row.index("address_normalized")
       file.write(CSV.generate_line(row))
     end
   end
@@ -82,7 +80,7 @@ class AddressNormalizer
     begin
       CSV.parse(line) do |row|
         begin
-          strt_ad = StreetAddress::US.parse(row[@address_index] + ", , ")
+          strt_ad = StreetAddress::US.parse(row[address_index] + ", , ")
           # Catch empty address
         rescue NoMethodError
           strt_ad = ""
@@ -92,23 +90,29 @@ class AddressNormalizer
       end
       # Rescue from problem rows
     rescue CSV::MalformedCSVError => er
-      @errors << er.message
-      @malformed_rows << line
+      self.errors << er.message
+      self.malformed_rows << line
     end
   end
 
   def handle_malformed_rows
-    puts "Errors: #{@errors.to_s}\n\n\n" unless @errors.empty?
+    puts "Errors: #{errors.to_s}\n\n\n" unless errors.empty?
 
-    malformed_row_output_file = File.open("AddressNormalizer_MalformedRows_#{@timestamp}.txt", "w")
+    malformed_row_output_file = File.open("AddressNormalizer_MalformedRows_#{timestamp}.txt", "w")
     puts "Malformed rows:"
-    @malformed_rows.each do |row|
+    malformed_rows.each do |row|
       puts row
       malformed_row_output_file.write(row + "\n")
     end
     puts "Malformed rows saved to disk in #{malformed_row_output_file.path}."
     
     malformed_row_output_file.close
+  end
+
+  def tester
+    puts address_index
+    self.address_index = 3
+    puts address_index
   end
 
 end
