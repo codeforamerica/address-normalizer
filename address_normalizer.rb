@@ -3,7 +3,7 @@ require 'street_address'
 require 'cmess/guess_encoding'
 require 'pry'
 
-class AddressNormalizer
+class FileNormalizer
 
   attr_accessor :errors, :malformed_rows, :timestamp, :address_index, :normalized_address_index
 
@@ -53,30 +53,28 @@ class AddressNormalizer
     counter = 0
     IO.foreach(filename, :encoding => source_encoding) do |line|
       puts "On row #{counter}" if counter % 100 == 0
-      # If the header row, get the indecx for the address and add a column for the address_normalized
       if counter == 0
         handle_first_row(normalized_out, line)
-        # For normal rows, normalize, write to file, and catch errors
       else
         normalize_line(normalized_out, line)
       end
       counter += 1
     end
-    #not closing screws up tests
+
     normalized_out.close
   end
 
-  def handle_first_row(file, line)
+  def handle_first_row(file_out, line)
     CSV.parse(line) do |row|
       # check if 'address' exists
       self.address_index = row.index("address")
       row << "address_normalized"
       self.normalized_address_index = row.index("address_normalized")
-      file.write(CSV.generate_line(row))
+      file_out.write(CSV.generate_line(row))
     end
   end
 
-  def normalize_line(file, line)
+  def normalize_line(file_out, line)
     begin
       CSV.parse(line) do |row|
         begin
@@ -86,7 +84,7 @@ class AddressNormalizer
           strt_ad = ""
         end
         row << strt_ad.to_s.upcase
-        file.write(CSV.generate_line(row))
+        file_out.write(CSV.generate_line(row))
       end
       # Rescue from problem rows
     rescue CSV::MalformedCSVError => er
@@ -107,12 +105,6 @@ class AddressNormalizer
     puts "Malformed rows saved to disk in #{malformed_row_output_file.path}."
     
     malformed_row_output_file.close
-  end
-
-  def tester
-    puts address_index
-    self.address_index = 3
-    puts address_index
   end
 
 end

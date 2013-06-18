@@ -1,14 +1,14 @@
 require 'csv'
 require_relative 'address_normalizer'
 
-describe AddressNormalizer do
+describe FileNormalizer do
 
 	before :all do
 		@timestamp = Time.now.to_s.gsub(/:|-/,"").gsub(/\s+/,"_")
 		@filename  = "test1_NormalizedAddresses_#{@timestamp}.csv"
 		@malformed = "AddressNormalizer_MalformedRows_#{@timestamp}.txt"
 
-		@normalized = AddressNormalizer.new('example_data/test1.csv')
+		@normalized = FileNormalizer.new('example_data/test1.csv')
 	end
 
 	it "should create a normalized output file" do

@@ -2,7 +2,7 @@ require 'test/unit'
 require 'csv'
 require_relative 'address_normalizer'
 
-class AddressNormalizerTest < Test::Unit::TestCase
+class FileNormalizerTest < Test::Unit::TestCase
 
 	# run and create test1_NormalizedAddresses_<time>.csv
 	def setup
@@ -30,7 +30,6 @@ class AddressNormalizerTest < Test::Unit::TestCase
 		assert rows[1][2] == "6687 DEL PARTY AVENUE 90045, ISLA VISTA, CA"
 	end
 
-	# TODO malformed rows test
 	def test_unclosed_row_error_caught
 		assert !@normalized.errors.empty?
 	end
